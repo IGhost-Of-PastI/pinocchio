@@ -131,6 +131,7 @@ function(PINOCCHIO_TARGET target_name)
     endif()
 
     add_library(${LIB_NAME} ${LIBRARY_TYPE})
+    set_target_properties(${LIB_NAME} PROPERTIES LINKER_LANGUAGE CXX)
     add_library(${PROJECT_NAME}::${LIB_NAME} ALIAS ${LIB_NAME})
     target_link_libraries(
         ${LIB_NAME}
@@ -239,24 +240,24 @@ source_group("Header Files" FILES
 )
 
 # (optional) define profiling target (tracy) on which downstream targets will depend
-if(PINOCCHIO_BUILD_WITH_TRACY)
-    set(PROFILING_LIB_NAME "${PROJECT_NAME}_tracy")
-    # No scalar or sources for this target
-    pinocchio_target(${PROFILING_LIB_NAME} INTERFACE)
-    target_link_libraries(${PROFILING_LIB_NAME} INTERFACE Tracy::TracyClient)
-endif(PINOCCHIO_BUILD_WITH_TRACY)
+#if(PINOCCHIO_BUILD_WITH_TRACY)
+#    set(PROFILING_LIB_NAME "${PROJECT_NAME}_tracy")
+#    # No scalar or sources for this target
+#    pinocchio_target(${PROFILING_LIB_NAME} INTERFACE)
+#    target_link_libraries(${PROFILING_LIB_NAME} INTERFACE Tracy::TracyClient)
+#endif(PINOCCHIO_BUILD_WITH_TRACY)
 
 # Define the default target (double).
 #
 # This target will also have coal and workspace module in it.
 pinocchio_specific_type(default DEFAULT_SCOPE)
-if(PINOCCHIO_BUILD_WITH_TRACY)
-    target_link_libraries(
-        ${PROJECT_NAME}_default
-        ${DEFAULT_SCOPE}
-        ${PROFILING_LIB_NAME}
-    )
-endif(PINOCCHIO_BUILD_WITH_TRACY)
+#if(PINOCCHIO_BUILD_WITH_TRACY)
+#    target_link_libraries(
+#        ${PROJECT_NAME}_default
+#        ${DEFAULT_SCOPE}
+#        ${PROFILING_LIB_NAME}
+#    )
+#endif(PINOCCHIO_BUILD_WITH_TRACY)
 
 # Some core library algorithms have different behavior if PINOCCHIO_WITH_COLLISION is defined. Since
 # some are template instantiated, or some user can link only on pinocchio_default, we must define
