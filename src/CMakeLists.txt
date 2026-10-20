@@ -47,18 +47,10 @@ if(ASSERT_ON_EXCEPTION)
     )
 endif()
 
-modernize_target_link_libraries(
-  ${PROJECT_NAME}_headers
-  SCOPE INTERFACE
-  TARGETS Eigen3::Eigen
-  INCLUDE_DIRS ${EIGEN3_INCLUDE_DIR}
-)
-modernize_target_link_libraries(
-  ${PROJECT_NAME}_headers
-  SCOPE INTERFACE
-  TARGETS Boost::boost Boost::serialization
-  LIBRARIES ${Boost_SERIALIZATION_LIBRARY}
-  INCLUDE_DIRS ${Boost_INCLUDE_DIRS}
+target_link_libraries(${PROJECT_NAME}_headers INTERFACE
+  Eigen3::Eigen
+  Boost::boost
+  Boost::serialization
 )
 
 target_include_directories(
@@ -78,10 +70,8 @@ if(PINOCCHIO_INSTALL_DEPRECATED_HEADERS)
     )
 endif()
 
-cxx_flags_by_compiler_frontend(
-  MSVC "/bigobj"
-  OUTPUT PUBLIC_OPTIONS
-  FILTER
+target_compile_options(${PROJECT_NAME}_headers INTERFACE
+  $<$<CXX_COMPILER_ID:MSVC>:/bigobj>
 )
 # Deactivate -Warray-bounds and -Wmaybe-uninitialized on GCC
 # because it give too much false positive.
@@ -94,7 +84,10 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
 endif()
 target_compile_options(${PROJECT_NAME}_headers INTERFACE ${PUBLIC_OPTIONS})
 
-cxx_flags_by_compiler_frontend(MSVC "NOMINMAX" OUTPUT PUBLIC_DEFINITIONS)
+target_compile_definitions(${PROJECT_NAME}_headers INTERFACE
+  $<$<CXX_COMPILER_ID:MSVC>:NOMINMAX>
+)
+
 target_compile_definitions(
     ${PROJECT_NAME}_headers
     INTERFACE ${PUBLIC_DEFINITIONS}
@@ -144,23 +137,6 @@ function(PINOCCHIO_TARGET target_name)
         ${LIBRARY_PUBLIC_SCOPE}
         ${PROJECT_NAME}_headers
     )
-
-    # On CMake 3.16 we can't call target_sources or set_target_properties with LINKER_LANGUAGE,
-    # INSTALL_RPATH and VERSION on an INTERFACE target.
-    if(NOT ARGS_INTERFACE OR CMAKE_VERSION GREATER 3.16)
-        target_sources(${LIB_NAME} PRIVATE ${ARGS_SOURCES})
-        # For IDE to get includes part of the project automatically.
-        target_sources(${LIB_NAME} PRIVATE ${${PROJECT_NAME}_CORE__HEADERS})
-        set_target_properties(
-            ${LIB_NAME}
-            PROPERTIES
-                LINKER_LANGUAGE CXX
-                INSTALL_RPATH "\$ORIGIN"
-                VERSION ${PROJECT_VERSION}
-                CXX_VISIBILITY_PRESET hidden
-                VISIBILITY_INLINES_HIDDEN ON
-        )
-    endif()
 
     if(ENABLE_TEMPLATE_INSTANTIATION AND NOT ARGS_INTERFACE)
         set(PINOCCHIO_CONTEXT_FILE_VALUE
@@ -224,32 +200,43 @@ function(PINOCCHIO_SPECIFIC_TYPE scalar_name scope)
     endif()
 endfunction()
 
+include(GenerateExportHeader)
+
 function(PINOCCHIO_CONFIG directory lib_name)
     string(TOUPPER ${lib_name} upper_lib_name)
-    generate_configuration_header_v2(
-      INCLUDE_DIR
-      ${PROJECT_BINARY_DIR}/include
-      HEADER_DIR
-      pinocchio/${directory}
-      FILENAME
-      config.hpp
-      LIBRARY_NAME
-      ${upper_lib_name}
-      EXPORT_SYMBOL
-      ${lib_name}_EXPORTS
+    
+    # 1. Генерируем стандартный заголовочный файл экспорта для таргета ${lib_name}
+    generate_export_header(${lib_name}
+        BASE_NAME ${upper_lib_name}
+        EXPORT_FILE_NAME "${PROJECT_BINARY_DIR}/include/pinocchio/${directory}/config.hpp"
+        EXPORT_MACRO_NAME "${upper_lib_name}_EXPORTS"
+    )
+    
+    # 2. Добавляем путь к сгенерированному файлу в инклуды этого таргета
+    target_include_directories(${lib_name} PUBLIC 
+        $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/include>
     )
 endfunction()
 
-add_source_group(${PROJECT_NAME}_CORE_SOURCES)
-add_source_group(${PROJECT_NAME}_PARSERS_SOURCES)
-add_source_group(${PROJECT_NAME}_EXTRA_SOURCES)
-add_source_group(${PROJECT_NAME}_VISUALIZERS_SOURCES)
-add_header_group(${PROJECT_NAME}_CORE_HEADERS)
-add_header_group(${PROJECT_NAME}_PARSERS_HEADERS)
-add_header_group(${PROJECT_NAME}_COLLISION_HEADERS)
-add_header_group(${PROJECT_NAME}_EXTRA_HEADERS)
-add_header_group(${PROJECT_NAME}_CORE_GENERATED_HEADERS)
-add_header_group(${PROJECT_NAME}_VISUALIZERS_HEADERS)
+# 1. Группируем файлы исходного кода, которые лежат в папке src
+source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES
+  ${${PROJECT_NAME}_CORE_SOURCES}
+  ${${PROJECT_NAME}_PARSERS_SOURCES}
+  ${${PROJECT_NAME}_EXTRA_SOURCES}
+  ${${PROJECT_NAME}_VISUALIZERS_SOURCES}
+)
+
+# 2. Группируем заголовочные файлы, которые лежат в папке include
+# Поднимаемся на уровень выше, где находится папка include
+# Группируем ВСЕ заголовочные файлы в одну виртуальную папку "Header Files" в Visual Studio
+source_group("Header Files" FILES
+  ${${PROJECT_NAME}_CORE_HEADERS}
+  ${${PROJECT_NAME}_PARSERS_HEADERS}
+  ${${PROJECT_NAME}_COLLISION_HEADERS}
+  ${${PROJECT_NAME}_EXTRA_HEADERS}
+  ${${PROJECT_NAME}_CORE_GENERATED_HEADERS}
+  ${${PROJECT_NAME}_VISUALIZERS_HEADERS}
+)
 
 # (optional) define profiling target (tracy) on which downstream targets will depend
 if(PINOCCHIO_BUILD_WITH_TRACY)
@@ -415,12 +402,8 @@ if(BUILD_WITH_PARSERS_SUPPORT)
         )
     endif()
 
-    modernize_target_link_libraries(
-      ${PARSERS_LIB_NAME}
-      SCOPE PUBLIC
-      TARGETS Boost::filesystem
-      LIBRARIES ${Boost_FILESYSTEM_LIBRARY}
-      INCLUDE_DIRS ${Boost_INCLUDE_DIRS}
+    target_link_libraries(${PARSERS_LIB_NAME} PUBLIC
+        Boost::filesystem
     )
 
     # Special care of urdfdom version
@@ -430,13 +413,11 @@ if(BUILD_WITH_PARSERS_SUPPORT)
             PUBLIC PINOCCHIO_WITH_URDFDOM
         )
 
-        modernize_target_link_libraries(
-          ${PARSERS_LIB_NAME}
-          SCOPE PUBLIC
-          TARGETS urdfdom::urdf_parser
-          LIBRARIES ${urdfdom_LIBRARIES}
-          INCLUDE_DIRS ${urdfdom_INCLUDE_DIRS}
+        # Линкуем urdfdom напрямую через его стандартный таргет
+        target_link_libraries(${PARSERS_LIB_NAME} PUBLIC
+            urdfdom::urdf_parser
         )
+
 
         # Expose urdfdom_headers version
         string(REPLACE "." ";" _URDFDOM_H_VER "${urdfdom_headers_VERSION}")
@@ -511,23 +492,23 @@ if(BUILD_WITH_CASADI_SUPPORT)
     target_link_libraries(${PROJECT_NAME}_casadi ${CASADI_SCOPE} casadi::casadi)
 endif()
 
-if(BUILD_WITH_PYTHON_PARSER_SUPPORT)
-    set(PYTHON_PARSER_LIB_NAME "${PROJECT_NAME}_python_parser")
-
-    pinocchio_target(
-      ${PYTHON_PARSER_LIB_NAME}
-      SCALAR default
-      SOURCES ${${PROJECT_NAME}_PYTHON_PARSER_SOURCES}
-              ${${PROJECT_NAME}_PYTHON_PARSER_HEADERS}
-    )
-    pinocchio_config(python_parser ${PYTHON_PARSER_LIB_NAME})
-
-    target_link_libraries(
-        ${PYTHON_PARSER_LIB_NAME}
-        PUBLIC ${PROJECT_NAME}_default Python3::Python
-    )
-    target_link_boost_python(${PYTHON_PARSER_LIB_NAME} PUBLIC)
-endif()
+#if(BUILD_WITH_PYTHON_PARSER_SUPPORT)
+#    set(PYTHON_PARSER_LIB_NAME "${PROJECT_NAME}_python_parser")
+#
+#    pinocchio_target(
+#      ${PYTHON_PARSER_LIB_NAME}
+#      SCALAR default
+#      SOURCES ${${PROJECT_NAME}_PYTHON_PARSER_SOURCES}
+#              ${${PROJECT_NAME}_PYTHON_PARSER_HEADERS}
+#    )
+#    pinocchio_config(python_parser ${PYTHON_PARSER_LIB_NAME})
+#
+#    target_link_libraries(
+#        ${PYTHON_PARSER_LIB_NAME}
+#        PUBLIC ${PROJECT_NAME}_default Python3::Python
+#    )
+#    target_link_boost_python(${PYTHON_PARSER_LIB_NAME} PUBLIC)
+#endif()
 
 # Define main target (default, parsers, extra).
 add_library(${PROJECT_NAME} INTERFACE)

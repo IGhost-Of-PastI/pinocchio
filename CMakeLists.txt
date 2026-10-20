@@ -3,9 +3,9 @@
 # Copyright (c) 2015 Wandercraft, 86 rue de Paris 91400 Orsay, France.
 #
 
-cmake_minimum_required(VERSION 3.22)
+cmake_minimum_required(VERSION 3.25)
 
-set(PROJECT_NAME pinocchio)
+project(pinocchio LANGUAGES CXX)
 set(PROJECT_DESCRIPTION
     "A fast and flexible implementation of Rigid Body Dynamics algorithms and their analytical derivatives"
 )
@@ -17,9 +17,6 @@ endif()
 set(PROJECT_USE_KEYWORD_LINK_LIBRARIES TRUE)
 set(PROJECT_COMPATIBILITY_VERSION AnyNewerVersion)
 set(PINOCCHIO_PROJECT_SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR})
-# To enable jrl-cmakemodules compatibility with workspace we must define the two following lines
-set(PROJECT_AUTO_RUN_FINALIZE FALSE)
-set(PROJECT_SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR})
 
 # Disable -Werror on Unix for now.
 set(CXX_DISABLE_WERROR True)
@@ -29,43 +26,12 @@ set(CMAKE_VERBOSE_MAKEFILE True)
 # --- OPTIONS  ---------------------------------------
 # Need to be set before including base.cmake
 # ----------------------------------------------------
-option(INSTALL_DOCUMENTATION "Generate and install the documentation" OFF)
-option(PINOCCHIO_DOXYGEN_USE_MATHJAX "Avoid latex at build time" OFF)
+#option(INSTALL_DOCUMENTATION "Generate and install the documentation" OFF)
+#option(PINOCCHIO_DOXYGEN_USE_MATHJAX "Avoid latex at build time" OFF)
 
-# Check if the submodule cmake have been initialized
-set(JRL_CMAKE_MODULES "${CMAKE_CURRENT_LIST_DIR}/cmake")
-if(EXISTS "${JRL_CMAKE_MODULES}/base.cmake")
-    message(STATUS "JRL cmakemodules found in 'cmake/' git submodule")
-else()
-    find_package(jrl-cmakemodules QUIET CONFIG)
-    if(jrl-cmakemodules_FOUND)
-        get_property(
-            JRL_CMAKE_MODULES
-            TARGET jrl-cmakemodules::jrl-cmakemodules
-            PROPERTY INTERFACE_INCLUDE_DIRECTORIES
-        )
-        message(
-            STATUS
-            "JRL cmakemodules found on system at ${JRL_CMAKE_MODULES}"
-        )
-    else()
-        message(STATUS "JRL cmakemodules not found. Let's fetch it.")
-        include(FetchContent)
-        FetchContent_Declare(
-            "jrl-cmakemodules"
-            GIT_REPOSITORY "https://github.com/jrl-umi3218/jrl-cmakemodules.git"
-        )
-        FetchContent_MakeAvailable("jrl-cmakemodules")
-        FetchContent_GetProperties(
-            "jrl-cmakemodules"
-            SOURCE_DIR JRL_CMAKE_MODULES
-        )
-    endif()
-endif()
-
-if(PINOCCHIO_DOXYGEN_USE_MATHJAX)
-    set(DOXYGEN_USE_MATHJAX YES)
-endif()
+#if(PINOCCHIO_DOXYGEN_USE_MATHJAX)
+#    set(DOXYGEN_USE_MATHJAX YES)
+#endif()
 
 # ----------------------------------------------------
 # --- Policy -----------------------------------------
@@ -89,57 +55,49 @@ if(POLICY CMP0177)
     cmake_policy(SET CMP0177 NEW)
     set(CMAKE_POLICY_DEFAULT_CMP0177 NEW)
 endif()
-include("${JRL_CMAKE_MODULES}/base.cmake")
-
-compute_project_args(PROJECT_ARGS LANGUAGES CXX)
-project(${PROJECT_NAME} ${PROJECT_ARGS})
 
 set(INSTALL_PKG_CONFIG_FILE OFF CACHE BOOL "" FORCE)
 
-include("${JRL_CMAKE_MODULES}/tracy.cmake")
-include("${JRL_CMAKE_MODULES}/python.cmake")
-include("${JRL_CMAKE_MODULES}/boost.cmake")
-include("${JRL_CMAKE_MODULES}/ide.cmake")
-include("${JRL_CMAKE_MODULES}/apple.cmake")
 include(CMakeDependentOption)
 
 # If needed, set CMake policy for APPLE systems
-apply_default_apple_configuration()
+#apply_default_apple_configuration()
 
-# Force C++ standard to be C++17 at least
-check_minimal_cxx_standard(17 ENFORCE)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
 # --- OPTIONS ----------------------------------------
-option(BUILD_BENCHMARK "Build the benchmarks" OFF)
-option(BUILD_EXAMPLES "Build the examples" ON)
+#option(BUILD_BENCHMARK "Build the benchmarks" OFF)
+#option(BUILD_EXAMPLES "Build the examples" ON)
 option(BUILD_UTILS "Build the utils" OFF)
-option(
-    GENERATE_PYTHON_STUBS
-    "Generate the Python stubs associated to the Python library"
-    OFF
-)
+#option(
+#    GENERATE_PYTHON_STUBS
+#    "Generate the Python stubs associated to the Python library"
+#    OFF
+#)
 option(
     BUILD_WITH_COMMIT_VERSION
     "Build libraries by setting specific commit version"
     OFF
 )
 
-if(DEFINED BUILD_UNIT_TESTS)
-    message(
-        AUTHOR_WARNING
-        "BUILD_UNIT_TESTS is deprecated. Use BUILD_TESTING instead.\
-    If you are manually building Pinocchio from source in an existing build folder,\
-    we suggest that you delete your build folder and make a new one."
-    )
-    set(BUILD_TESTING ${BUILD_UNIT_TESTS})
-endif(DEFINED BUILD_UNIT_TESTS)
+#if(DEFINED BUILD_UNIT_TESTS)
+#    message(
+#        AUTHOR_WARNING
+#        "BUILD_UNIT_TESTS is deprecated. Use BUILD_TESTING instead.\
+#    If you are manually building Pinocchio from source in an existing build folder,\
+#    we suggest that you delete your build folder and make a new one."
+#    )
+#    set(BUILD_TESTING ${BUILD_UNIT_TESTS})
+#endif(DEFINED BUILD_UNIT_TESTS)
 
-option(
-    BUILD_ADVANCED_TESTING
-    "Build the advanced tests (multiprecision, etc.) of Pinocchio"
-    OFF
-)
-option(PINOCCHIO_BUILD_MPFR_TESTING "Build MPFR dependent tests" OFF)
+#option(
+#    BUILD_ADVANCED_TESTING
+#    "Build the advanced tests (multiprecision, etc.) of Pinocchio"
+#    OFF
+#)
+#option(PINOCCHIO_BUILD_MPFR_TESTING "Build MPFR dependent tests" OFF)
 
 # --- OPTIONAL DEPENDENCIES -------------------------
 option(
@@ -168,41 +126,41 @@ option(
     OFF
 )
 # cppadcodgen don't build well with CL
-if(NOT WIN32)
-    option(
-        BUILD_WITH_CODEGEN_SUPPORT
-        "Build the library with the support of code generation (via CppADCodeGen)"
-        OFF
-    )
-endif()
+#if(NOT WIN32)
+#    option(
+#        BUILD_WITH_CODEGEN_SUPPORT
+#        "Build the library with the support of code generation (via CppADCodeGen)"
+#        OFF
+#    )
+#endif()
 option(
     BUILD_WITH_OPENMP_SUPPORT
     "Build the library with the OpenMP support"
     OFF
 )
-cmake_dependent_option(
-    BUILD_PYTHON_BINDINGS_WITH_BOOST_MPFR_SUPPORT
-    "Build the Python interface with Boost.Multiprecision MPFR support"
-    OFF
-    BUILD_PYTHON_INTERFACE
-    OFF
-)
-cmake_dependent_option(
-    BUILD_WITH_LIBPYTHON
-    "Build the library with Python format support"
-    ON
-    "BUILD_PYTHON_INTERFACE"
-    OFF
-)
-if(APPLE)
-    option(
-        BUILD_WITH_ACCELERATE_SUPPORT
-        "Build Pinocchio with the Accelerate support"
-        OFF
-    )
-else(APPLE)
-    set(BUILD_WITH_ACCELERATE_SUPPORT FALSE)
-endif(APPLE)
+#cmake_dependent_option(
+#    BUILD_PYTHON_BINDINGS_WITH_BOOST_MPFR_SUPPORT
+#    "Build the Python interface with Boost.Multiprecision MPFR support"
+#    OFF
+#    BUILD_PYTHON_INTERFACE
+#    OFF
+#)
+#cmake_dependent_option(
+#    BUILD_WITH_LIBPYTHON
+#    "Build the library with Python format support"
+#    ON
+#    "BUILD_PYTHON_INTERFACE"
+#    OFF
+#)
+#if(APPLE)
+#    option(
+#        BUILD_WITH_ACCELERATE_SUPPORT
+#        "Build Pinocchio with the Accelerate support"
+#        OFF
+#    )
+#else(APPLE)
+set(BUILD_WITH_ACCELERATE_SUPPORT FALSE)
+#endif(APPLE)
 
 option(INITIALIZE_WITH_NAN "Initialize Eigen entries with NaN" OFF)
 option(
@@ -217,17 +175,17 @@ option(
     ON
 )
 
-option(
-    PINOCCHIO_BUILD_WITH_TRACY
-    "Build with tracy profiler for performance analysis"
-    OFF
-)
+#option(
+#    PINOCCHIO_BUILD_WITH_TRACY
+#    "Build with tracy profiler for performance analysis"
+#    OFF
+#)
 
-option(
-    BUILD_WITH_RTSAN
-    "Build with the Realtime Sanitizer (clang >=20, linux/mac only)"
-    OFF
-)
+#option(
+#    BUILD_WITH_RTSAN
+#    "Build with the Realtime Sanitizer (clang >=20, linux/mac only)"
+#    OFF
+#)
 
 option(
     PINOCCHIO_INSTALL_DEPRECATED_HEADERS
@@ -237,58 +195,58 @@ option(
 
 # PCH and ccache doesn't play well together so we deactivate
 # PCH use by default
-option(
-    PINOCCHIO_BUILD_BINDING_WITH_PCH
-    "Use PCH to accelerate binding build"
-    OFF
-)
-option(PINOCCHIO_BUILD_VISUALIZERS "Build the pinocchio visualizers library" ON)
+#option(
+#    PINOCCHIO_BUILD_BINDING_WITH_PCH
+#    "Use PCH to accelerate binding build"
+#    OFF
+#)
+#option(PINOCCHIO_BUILD_VISUALIZERS "Build the pinocchio visualizers library" ON)
 
-set(PINOCCHIO_MODEL_DIR "${PROJECT_SOURCE_DIR}/models")
-if(BUILD_BENCHMARK OR BUILD_EXAMPLES OR BUILD_TESTING)
-    # example-robot-data is required
-    if(EXAMPLE_ROBOT_DATA_MODEL_DIR)
-        file(
-            REAL_PATH "${EXAMPLE_ROBOT_DATA_MODEL_DIR}"
-            EXAMPLE_ROBOT_DATA_MODEL_DIR
-            EXPAND_TILDE
-        )
-        message(
-            STATUS
-            "Using provided example-robot-data at: ${EXAMPLE_ROBOT_DATA_MODEL_DIR}"
-        )
-    elseif(
-        EXISTS
-            "${CMAKE_CURRENT_LIST_DIR}/models/example-robot-data/CMakeLists.txt"
-    )
-        set(EXAMPLE_ROBOT_DATA_MODEL_DIR
-            "${PINOCCHIO_MODEL_DIR}/example-robot-data/robots"
-        )
-    else()
-        find_package(example-robot-data REQUIRED CONFIG)
-        get_target_property(
-            EXAMPLE_ROBOT_DATA_MODEL_DIR_DEF
-            example-robot-data::example-robot-data
-            INTERFACE_COMPILE_DEFINITIONS
-        )
-        string(
-            REPLACE "EXAMPLE_ROBOT_DATA_MODEL_DIR="
-            ""
-            EXAMPLE_ROBOT_DATA_MODEL_DIR_QUOTES
-            "${EXAMPLE_ROBOT_DATA_MODEL_DIR_DEF}"
-        )
-        string(
-            REPLACE "\""
-            ""
-            EXAMPLE_ROBOT_DATA_MODEL_DIR
-            "${EXAMPLE_ROBOT_DATA_MODEL_DIR_QUOTES}"
-        )
-        message(
-            STATUS
-            "Using system example-robot-data at: ${EXAMPLE_ROBOT_DATA_MODEL_DIR}"
-        )
-    endif()
-endif()
+#set(PINOCCHIO_MODEL_DIR "${PROJECT_SOURCE_DIR}/models")
+#if(BUILD_BENCHMARK OR BUILD_EXAMPLES OR BUILD_TESTING)
+#    # example-robot-data is required
+#    if(EXAMPLE_ROBOT_DATA_MODEL_DIR)
+#        file(
+#            REAL_PATH "${EXAMPLE_ROBOT_DATA_MODEL_DIR}"
+#            EXAMPLE_ROBOT_DATA_MODEL_DIR
+#            EXPAND_TILDE
+#        )
+#        message(
+#            STATUS
+#            "Using provided example-robot-data at: ${EXAMPLE_ROBOT_DATA_MODEL_DIR}"
+#        )
+#    elseif(
+#        EXISTS
+#            "${CMAKE_CURRENT_LIST_DIR}/models/example-robot-data/CMakeLists.txt"
+#    )
+#        set(EXAMPLE_ROBOT_DATA_MODEL_DIR
+#            "${PINOCCHIO_MODEL_DIR}/example-robot-data/robots"
+#        )
+#    else()
+#        find_package(example-robot-data REQUIRED CONFIG)
+#        get_target_property(
+#            EXAMPLE_ROBOT_DATA_MODEL_DIR_DEF
+#            example-robot-data::example-robot-data
+#            INTERFACE_COMPILE_DEFINITIONS
+#        )
+#        string(
+#            REPLACE "EXAMPLE_ROBOT_DATA_MODEL_DIR="
+#            ""
+#            EXAMPLE_ROBOT_DATA_MODEL_DIR_QUOTES
+#            "${EXAMPLE_ROBOT_DATA_MODEL_DIR_DEF}"
+#        )
+#        string(
+#            REPLACE "\""
+#            ""
+#            EXAMPLE_ROBOT_DATA_MODEL_DIR
+#            "${EXAMPLE_ROBOT_DATA_MODEL_DIR_QUOTES}"
+#        )
+#        message(
+#            STATUS
+#            "Using system example-robot-data at: ${EXAMPLE_ROBOT_DATA_MODEL_DIR}"
+#        )
+#    endif()
+#endif()
 
 if(BUILD_WITH_CODEGEN_SUPPORT)
     set(BUILD_WITH_CPPAD_CODEGEN_SUPPORT TRUE)
@@ -297,9 +255,9 @@ endif()
 if(BUILD_WITH_AUTODIFF_SUPPORT)
     set(BUILD_WITH_CPPAD_SUPPORT TRUE)
 endif()
-if(BUILD_WITH_LIBPYTHON)
-    set(BUILD_WITH_PYTHON_PARSER_SUPPORT TRUE)
-endif()
+#if(BUILD_WITH_LIBPYTHON)
+#    set(BUILD_WITH_PYTHON_PARSER_SUPPORT TRUE)
+#endif()
 
 if(INITIALIZE_WITH_NAN)
     message(STATUS "Initialize with NaN all the Eigen entries.")
@@ -316,20 +274,20 @@ endmacro(TAG_LIBRARY_VERSION)
 # ----------------------------------------------------
 # --- DEPENDENCIES -----------------------------------
 # ----------------------------------------------------
-set(CMAKE_MODULE_PATH
-    "${JRL_CMAKE_MODULES}/find-external/CppAD/"
-    ${CMAKE_MODULE_PATH}
-)
+#set(CMAKE_MODULE_PATH
+#    "${JRL_CMAKE_MODULES}/find-external/CppAD/"
+#    ${CMAKE_MODULE_PATH}
+#)
 
-add_project_dependency(Eigen3 REQUIRED)
+find_package(Eigen3 REQUIRED)
 
 if(BUILD_WITH_URDF_SUPPORT)
-    add_project_dependency(urdfdom_headers REQUIRED)
-    add_project_dependency(urdfdom REQUIRED)
+    find_package(urdfdom_headers REQUIRED)
+    find_package(urdfdom REQUIRED)
     set(urdfdom_VERSION ${urdfdom_headers_VERSION})
 
     if(${urdfdom_VERSION} VERSION_GREATER "0.4.2")
-        check_minimal_cxx_standard(11 ENFORCE)
+        #check_minimal_cxx_standard(11 ENFORCE)
         message(
             STATUS
             "Since urdfdom >= 1.0.0, the default C++ standard is C++11. The project is then compiled with C++11 standard."
@@ -338,12 +296,11 @@ if(BUILD_WITH_URDF_SUPPORT)
 endif()
 
 if(BUILD_WITH_SDF_SUPPORT)
-    include(${JRL_CMAKE_MODULES}/sdformat.cmake)
-    search_for_sdformat(REQUIRED)
+    find_package(sdformat14 REQUIRED)
     if(SDFormat_FOUND)
-        check_minimal_cxx_standard(11 REQUIRED)
-        include_directories(${SDFormat_INCLUDE_DIRS})
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${SDFormat_CXX_FLAGS}")
+        #check_minimal_cxx_standard(11 REQUIRED)
+        #include_directories(${SDFormat_INCLUDE_DIRS})
+        #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${SDFormat_CXX_FLAGS}")
     endif()
 endif()
 
@@ -354,23 +311,23 @@ else()
 endif()
 
 # -- tracy (optional)
-if(PINOCCHIO_BUILD_WITH_TRACY)
-    # assume it is installed somewhere
-    add_project_dependency(Tracy REQUIRED)
-    set_target_properties(
-        Tracy::TracyClient
-        PROPERTIES POSITION_INDEPENDENT_CODE True
-    )
-    if(${Tracy_FOUND})
-        message(STATUS "Tracy found on your system at ${Tracy_DIR}")
-    else()
-        message(
-            FATAL_ERROR
-            "Pinocchio support for tracy is enabled, but tracy was not found on your system."
-            " Install it, or set the option PINOCCHIO_DOWNLOAD_TRACY to ON so we can fetch it."
-        )
-    endif()
-endif(PINOCCHIO_BUILD_WITH_TRACY)
+#if(PINOCCHIO_BUILD_WITH_TRACY)
+#    # assume it is installed somewhere
+#    add_project_dependency(Tracy REQUIRED)
+#    set_target_properties(
+#        Tracy::TracyClient
+#        PROPERTIES POSITION_INDEPENDENT_CODE True
+#    )
+#    if(${Tracy_FOUND})
+#        message(STATUS "Tracy found on your system at ${Tracy_DIR}")
+#    else()
+#        message(
+#            FATAL_ERROR
+#            "Pinocchio support for tracy is enabled, but tracy was not found on your system."
+#            " Install it, or set the option PINOCCHIO_DOWNLOAD_TRACY to ON so we can fetch it."
+#        )
+#    endif()
+#endif(PINOCCHIO_BUILD_WITH_TRACY)
 
 if(BUILD_WITH_AUTODIFF_SUPPORT)
     # Check first CppADCodeGen
@@ -395,17 +352,17 @@ if(BUILD_WITH_CASADI_SUPPORT)
 endif(BUILD_WITH_CASADI_SUPPORT)
 
 if(BUILD_WITH_OPENMP_SUPPORT)
-    add_project_dependency(OpenMP REQUIRED)
+    find_package(OpenMP REQUIRED)
 endif()
 
 if(BUILD_WITH_EXTRA_SUPPORT)
-    add_project_dependency(Qhull COMPONENTS qhullcpp qhull_r REQUIRED)
+    find_package(Qhull COMPONENTS qhullcpp qhull_r REQUIRED)
     message(STATUS "Found Qhull.")
 endif()
 
-set_boost_default_options()
-export_boost_default_options()
-add_project_dependency(Boost REQUIRED COMPONENTS filesystem serialization)
+#set_boost_default_options()
+#export_boost_default_options()
+find_package(Boost REQUIRED COMPONENTS filesystem serialization)
 
 if(Boost_VERSION_STRING VERSION_LESS 1.81)
     if(BUILD_WITH_URDF_SUPPORT AND "${urdfdom_VERSION}" VERSION_GREATER "0.4.2")
@@ -417,37 +374,37 @@ if(Boost_VERSION_STRING VERSION_LESS 1.81)
     endif()
 else()
     # Boost.Math will be C++14 starting in July 2023 (Boost 1.82 release)
-    check_minimal_cxx_standard(14 ENFORCE)
+    #check_minimal_cxx_standard(14 ENFORCE)
 endif()
 
-if(BUILD_PYTHON_INTERFACE)
-    message(
-        STATUS
-        "The Python bindings of Pinocchio will be compiled along the main library. If you want to disable this feature, please set the option BUILD_PYTHON_INTERFACE to OFF."
-    )
+#if(BUILD_PYTHON_INTERFACE)
+#    message(
+#        STATUS
+#        "The Python bindings of Pinocchio will be compiled along the main library. If you want to disable this feature, please set the option BUILD_PYTHON_INTERFACE to OFF."
+#    )
 
-    set(PYTHON_COMPONENTS Interpreter Development NumPy)
-    findpython(REQUIRED)
-    add_project_dependency(eigenpy 2.7.10 REQUIRED)
-    if(BUILD_STANDALONE_PYTHON_INTERFACE)
-        add_project_dependency(${PROJECT_NAME} REQUIRED CONFIG)
-    endif()
-
-    if(BUILD_WITH_URDF_SUPPORT)
+#    set(PYTHON_COMPONENTS Interpreter Development NumPy)
+#    findpython(REQUIRED)
+#    add_project_dependency(eigenpy 2.7.10 REQUIRED)
+#    if(BUILD_STANDALONE_PYTHON_INTERFACE)
+#        add_project_dependency(${PROJECT_NAME} REQUIRED CONFIG)
+#    endif()
+#
+#    if(BUILD_WITH_URDF_SUPPORT)
         # console_bridge is urdfdom dependency.
         #
         # We bind some enum of this library and then must link against it.
-        add_project_dependency(console_bridge REQUIRED)
-    endif()
-else()
+#        add_project_dependency(console_bridge REQUIRED)
+#    endif()
+#else()
     message(
         STATUS
         "Pinocchio won't be compiled with its Python bindings. If you want to enable this feature, please set the option BUILD_PYTHON_INTERFACE to ON."
     )
-endif()
+#endif()
 
 if(BUILD_WITH_COLLISION_SUPPORT)
-    add_project_dependency(coal REQUIRED)
+    find_package(coal REQUIRED)
 endif()
 
 if(BUILD_WITH_ACCELERATE_SUPPORT)
@@ -757,25 +714,25 @@ if(NOT BUILD_STANDALONE_PYTHON_INTERFACE)
 endif()
 
 # --- BINDINGS -----------------------------------------------------------------
-if(BUILD_PYTHON_INTERFACE)
-    add_subdirectory(bindings)
-endif()
+#if(BUILD_PYTHON_INTERFACE)
+#    add_subdirectory(bindings)
+#endif()
 
 # --- EXECUTABLES --------------------------------------------------------------
 add_subdirectory(utils)
 
 # --- UNIT TESTS ---------------------------------------------------------------
-add_subdirectory(unittest)
+#add_subdirectory(unittest)
 
 # --- CHECK EXAMPLES -----------------------------------------------------------
-if(BUILD_EXAMPLES)
-    add_subdirectory(examples)
-endif()
+#if(BUILD_EXAMPLES)
+#    add_subdirectory(examples)
+#endif()
 
 # --- BENCHMARKS ---------------------------------------------------------------
-if(BUILD_BENCHMARK AND NOT BUILD_STANDALONE_PYTHON_INTERFACE)
-    add_subdirectory(benchmark)
-endif()
+#if(BUILD_BENCHMARK AND NOT BUILD_STANDALONE_PYTHON_INTERFACE)
+#    add_subdirectory(benchmark)
+#endif()
 
 # --- PACKAGING ----------------------------------------------------------------
 # Export variables in CMake module and in parent scope for workspace compatibility
@@ -783,74 +740,47 @@ endif()
 # CONDITION: Condition to setup the variable
 # VAR_NAME: Variable name
 # VAR_VALUE: Varible value
-macro(EXPORT_VARIABLE)
-    set(options PARENT_SCOPE_ONLY)
-    set(oneValueArgs CONDITION VAR_NAME VAR_VALUE)
-    set(multiValueArgs)
-    cmake_parse_arguments(
-        ARGS
-        "${options}"
-        "${oneValueArgs}"
-        "${multiValueArgs}"
-        ${ARGN}
-    )
+# Обычные внутренние переменные проекта
+if(BUILD_WITH_URDF_SUPPORT)
+    set(PINOCCHIO_USE_URDFDOM ON)
+endif()
 
-    if(${ARGS_CONDITION})
-        get_directory_property(has_parent PARENT_DIRECTORY)
-        if(has_parent)
-            set(${ARGS_VAR_NAME} ${ARGS_VAR_VALUE} PARENT_SCOPE)
-        else()
-            set(${ARGS_VAR_NAME} ${ARGS_VAR_VALUE})
-        endif()
-        if(NOT ${ARGS_PARENT_SCOPE_ONLY})
-            string(
-                APPEND PACKAGE_EXTRA_MACROS
-                "\nset(${ARGS_VAR_NAME} ${ARGS_VAR_VALUE})"
-            )
-        endif()
-    endif()
-endmacro()
+if(BUILD_WITH_COLLISION_SUPPORT)
+    set(PINOCCHIO_USE_COAL ON)
+endif()
 
-export_variable(CONDITION PINOCCHIO_BUILD_WITH_TRACY
-                VAR_NAME PINOCCHIO_USE_TRACY
-                VAR_VALUE ON
-)
-export_variable(CONDITION BUILD_WITH_URDF_SUPPORT
-                VAR_NAME PINOCCHIO_USE_URDFDOM
-                VAR_VALUE ON
-)
-export_variable(CONDITION BUILD_WITH_COLLISION_SUPPORT
-                VAR_NAME PINOCCHIO_USE_COAL
-                VAR_VALUE ON
-)
-export_variable(CONDITION BUILD_WITH_CPPAD_SUPPORT
-                VAR_NAME PINOCCHIO_USE_CPPAD
-                VAR_VALUE ON
-)
-export_variable(CONDITION BUILD_WITH_CPPAD_CODEGEN_SUPPORT
-                VAR_NAME PINOCCHIO_USE_CPPAD_CODEGEN
-                VAR_VALUE ON
-)
-export_variable(CONDITION BUILD_WITH_CASADI_SUPPORT
-                VAR_NAME PINOCCHIO_USE_CASADI
-                VAR_VALUE ON
-)
-export_variable(CONDITION BUILD_PYTHON_INTERFACE
-                VAR_NAME PINOCCHIO_WITH_PYTHON_INTERFACE
-                VAR_VALUE ON
-)
-export_variable(CONDITION BUILD_WITH_EXTRA_SUPPORT
-                VAR_NAME PINOCCHIO_USE_EXTRA
-                VAR_VALUE ON
-)
-export_variable(CONDITION BUILD_WITH_PYTHON_PARSER_SUPPORT
-                VAR_NAME PINOCCHIO_USE_PYTHON_PARSER
-                VAR_VALUE ON
-)
-export_variable(CONDITION TRUE
-                VAR_NAME pinocchio_VERSION
-                VAR_VALUE ${pinocchio_VERSION}
-                PARENT_SCOPE_ONLY
+if(BUILD_WITH_CPPAD_SUPPORT)
+    set(PINOCCHIO_USE_CPPAD ON)
+endif()
+
+if(BUILD_WITH_CASADI_SUPPORT)
+    set(PINOCCHIO_USE_CASADI ON)
+endif()
+
+if(BUILD_WITH_EXTRA_SUPPORT)
+    set(PINOCCHIO_USE_EXTRA ON)
+endif()
+
+# Если этот проект добавляется через add_subdirectory, 
+# пробрасываем версию наверх (как делал последний вызов макроса)
+get_directory_property(has_parent PARENT_DIRECTORY)
+if(has_parent)
+    set(pinocchio_VERSION ${pinocchio_VERSION} PARENT_SCOPE)
+endif()
+
+include(CMakePackageConfigHelpers)
+
+# Генерируем финальный pinocchioConfig.cmake из шаблона .in
+configure_package_config_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/pinocchioConfig.cmake.in"
+    "${CMAKE_CURRENT_BINARY_DIR}/pinocchioConfig.cmake"
+    INSTALL_DESTINATION lib/cmake/pinocchio
 )
 
-setup_project_finalize()
+# Устанавливаем файлы конфигурации
+install(
+    FILES 
+        "${CMAKE_CURRENT_BINARY_DIR}/pinocchioConfig.cmake"
+    DESTINATION 
+        lib/cmake/pinocchio
+)

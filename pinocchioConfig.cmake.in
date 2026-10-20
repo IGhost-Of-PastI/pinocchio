@@ -1,0 +1,11 @@
+@PACKAGE_INIT@
+
+# Восстанавливаем переменные опций, которые были активны при сборке
+set(PINOCCHIO_USE_URDFDOM @PINOCCHIO_USE_URDFDOM@)
+set(PINOCCHIO_USE_COAL    @PINOCCHIO_USE_COAL@)
+set(PINOCCHIO_USE_CPPAD   @PINOCCHIO_USE_CPPAD@)
+set(PINOCCHIO_USE_CASADI  @PINOCCHIO_USE_CASADI@)
+set(PINOCCHIO_USE_EXTRA   @PINOCCHIO_USE_EXTRA@)
+
+# Подключаем автоматически сгенерированные таргеты библиотеки
+include("${CMAKE_CURRENT_LIST_DIR}/pinocchioTargets.cmake")
